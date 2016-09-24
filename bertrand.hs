@@ -76,7 +76,7 @@ main = do
   let entry' = case entry of "1" -> (chords1, "method1.png")
                              "2" -> (chords2, "method2.png")
                              "3" -> (chords3, "method3.png")
-                             _ -> error "Bad method, go talk to Bertrand Russell about it"
+                             _ -> error "Bad method, go talk to Joseph Bertrand about it"
   uncurry drawStuff entry'
   putStrLn "Drew something, check your folders"
 
