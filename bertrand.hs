@@ -1,9 +1,8 @@
 module Main where
 
-import Data.List
+import Data.List (splitAt)
 import System.Random
 import System.Environment
-
 import Graphics.Rendering.Chart.Easy
 import Graphics.Rendering.Chart.Backend.Cairo
 
@@ -42,6 +41,16 @@ drawChord3 midpt = [(x + dx, y + dy), (x - dx, y - dy)]
 circle :: [CircPoint]
 circle = [ radToPt rad | rad <- [0.00,0.01..2*pi] ]
 
+drawStuff :: [[CircPoint]] -> FilePath -> IO ()
+drawStuff method filename = toFile def filename $ do
+    layout_left_axis_visibility.axis_show_ticks .= False
+    layout_left_axis_visibility.axis_show_labels .= False
+    layout_bottom_axis_visibility.axis_show_ticks .= False
+    layout_bottom_axis_visibility.axis_show_labels .= False
+    setColors [opaque black, blue `withOpacity` 0.1]
+    plot (line "" [circle])
+    plot (line "" method)
+
 main :: IO ()
 main = do
   gen1 <- getStdGen
@@ -62,7 +71,12 @@ main = do
       chords1 = map (uncurry drawChord1) rands1
       chords2 = map (uncurry drawChord2) rands2
       chords3 = map drawChord3 rands3
-  toFile def "output.png" $ do
-    plot (line "" [circle])
-    plot (line "" chords3) -- this will later have all the chord methods
+  putStr "Enter desired method: "
+  entry <- getLine
+  let entry' = case entry of "1" -> (chords1, "method1.png")
+                             "2" -> (chords2, "method2.png")
+                             "3" -> (chords3, "method3.png")
+                             _ -> error "Bad method, go talk to Bertrand Russell about it"
+  uncurry drawStuff entry'
+  putStrLn "Drew something, check your folders"
 
