@@ -42,38 +42,41 @@ circle :: [CircPoint]
 circle = [ radToPt rad | rad <- [0.00,0.01..2*pi] ]
 
 drawStuff :: [[CircPoint]] -> FilePath -> IO ()
-drawStuff method filename = toFile def filename $ do
+drawStuff points filename = toFile def filename $ do
     layout_left_axis_visibility.axis_show_ticks .= False
     layout_left_axis_visibility.axis_show_labels .= False
     layout_bottom_axis_visibility.axis_show_ticks .= False
     layout_bottom_axis_visibility.axis_show_labels .= False
+    let op = min 1 (100 / fromIntegral (length points))
     setColors [opaque black, blue `withOpacity` 0.1]
     plot (line "" [circle])
-    plot (line "" method)
+    plot (line "" points)
 
 main :: IO ()
 main = do
+  -- We need >= 5 StdGens to ensure freshness of random numbers
   gen1 <- getStdGen
   gen2 <- newStdGen
   gen2' <- newStdGen
   gen3 <- newStdGen
   gen3' <- newStdGen
-  let rands1  = let randRdns = splitAt 1000 $ take 2000 (randomRs (0, 2 * pi) gen1 :: [Double])
+  putStr "Enter desired method: "
+  entry <- getLine
+  putStr "Enter desired number of repetitions: "
+  reps <- getLine
+  let reps'    = read reps
+      rands1  = let randRdns = splitAt reps' $ take (reps'*2) (randomRs (0, 2*pi) gen1 :: [Double])
                 in zip (fst randRdns) (snd randRdns)
-      rands2  = let (randRdns, randDbs) = (take 1000 (randomRs (0, 2 * pi) gen2),
-                                           take 1000 (randomRs (0.0, 1.0) gen2'))
+      rands2  = let (randRdns, randDbs) = (take reps' (randomRs (0, 2*pi) gen2),
+                                           take reps' (randomRs (0.0, 1.0) gen2'))
                                           :: ([Double], [Double])
                 in zip randRdns randDbs
-      rands3  = let (r, theta) = (take 1000 (randomRs (0.0, 1.0) gen3),
-                                  take 1000 (randomRs (0, 2 * pi) gen3'))
-                                  :: ([Double], [Double])
-                in map (\(x, y) -> (0 + x * cos y, 0 + x * sin y)) $ zip r theta
+      rands3  = let (x, y) = (randomRs (-1.0, 1.0) gen3, randomRs (-1.0, 1.0) gen3')
+                in take reps' $ filter (\(a, b) -> a^2 + b^2 <= 1 && (a, b) /= (0, 0)) $ zip x y
       chords1 = map (uncurry drawChord1) rands1
       chords2 = map (uncurry drawChord2) rands2
       chords3 = map drawChord3 rands3
-  putStr "Enter desired method: "
-  entry <- getLine
-  let entry' = case entry of "1" -> (chords1, "method1.png")
+      entry' = case entry of "1" -> (chords1, "method1.png")
                              "2" -> (chords2, "method2.png")
                              "3" -> (chords3, "method3.png")
                              _ -> error "Bad method, go talk to Joseph Bertrand about it"
