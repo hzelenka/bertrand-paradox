@@ -38,6 +38,11 @@ drawChord3 midpt = [(x + dx, y + dy), (x - dx, y - dy)]
         len      = sqrt $ 1 - radDist^2 -- Pythagorean formula
         (dx, dy) = (negate len * y', len * x')
 
+-- Length of a side of an inscribed equilateral triangle
+-- This is just for fun, the length of a side is sqrt 3!
+equilSide :: Double
+equilSide = distance (radToPt 0) (radToPt (2*pi/3))
+
 circle :: [CircPoint]
 circle = [ radToPt rad | rad <- [0.00,0.01..2*pi] ]
 
@@ -47,10 +52,12 @@ drawStuff points filename = toFile def filename $ do
     layout_left_axis_visibility.axis_show_labels .= False
     layout_bottom_axis_visibility.axis_show_ticks .= False
     layout_bottom_axis_visibility.axis_show_labels .= False
-    let op = min 1 (100 / fromIntegral (length points))
+    let op      = min 1 (100 / fromIntegral (length points))
+        count   = length $ filter (\l -> distance (head l) (l !! 1) >= sqrt 3) points
+        caption = show count ++ " out of " ++ show (length points) ++ "were longer"
     setColors [opaque black, blue `withOpacity` 0.1]
     plot (line "" [circle])
-    plot (line "" points)
+    plot (line caption points)
 
 main :: IO ()
 main = do
