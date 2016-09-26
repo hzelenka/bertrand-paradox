@@ -24,19 +24,19 @@ drawChord1 endpt1 endpt2 = map radToPt [endpt1, endpt2]
 -- Method 2: Choose a random radius and a point on the radius, then draw a perpendicular chord
 drawChord2 :: Radians -> Double -> [CircPoint]
 drawChord2 radius radDist = [(x' + dx, y' + dy),(x' - dx, y' - dy)]
-  where (x, y)   = radToPt radius
-        (x', y') = (radDist * x, radDist * y)
+  where (x, y)   = radToPt radius -- Decompose the midpoint into components
+        (x', y') = (radDist * x, radDist * y) -- Scale the midpoint by the provided scalar (< 1)
         len      = sqrt $ 1 - radDist^2 -- Pythagorean formula
-        (dx, dy) = (negate len * y, len * x)
+        (dx, dy) = (negate len * y, len * x) -- Rotate 90 degrees
                            
 -- Method 3: Choose a random interior point and draw a chord through it
 drawChord3 :: CircPoint -> [CircPoint]
 drawChord3 midpt = [(x + dx, y + dy), (x - dx, y - dy)]
-  where (x, y)   = midpt
-        radDist  = distance midpt (0,0)
-        (x', y') = let k = sqrt (1 / (x^2 + y^2)) in (k * x, k * y)
+  where (x, y)   = midpt -- Decompose the midpoint into components
+        radDist  = distance midpt (0,0) -- How far is it from the origin?
+        (x', y') = let k = sqrt (1 / (x^2 + y^2)) in (k * x, k * y) -- Distance to ends of chord
         len      = sqrt $ 1 - radDist^2 -- Pythagorean formula
-        (dx, dy) = (negate len * y', len * x')
+        (dx, dy) = (negate len * y', len * x') -- Rotate 90 degrees
 
 -- Length of a side of an inscribed equilateral triangle
 -- This is just for fun, the length of a side is sqrt 3!
@@ -71,7 +71,7 @@ main = do
   entry <- getLine
   putStr "Enter desired number of repetitions: "
   reps <- getLine
-  let reps'    = read reps
+  let reps'   = read reps
       rands1  = let randRdns = splitAt reps' $ take (reps'*2) (randomRs (0, 2*pi) gen1 :: [Double])
                 in zip (fst randRdns) (snd randRdns)
       rands2  = let (randRdns, randDbs) = (take reps' (randomRs (0, 2*pi) gen2),
