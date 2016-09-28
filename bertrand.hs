@@ -20,6 +20,12 @@ dist (x1, y1) (x2, y2) = sqrt $ (x2 - x1)^2 + (y2 - y1)^2
 drawChord1 :: Radians -> Radians -> [CircPoint]
 drawChord1 endpt1 endpt2 = map radToPt [endpt1, endpt2]
 
+ex1 :: IO ()
+ex1 = toFile def "ex1.png" $ do
+  plot (line "" [circle, map radToPt [pi/2,7*pi/6,11*pi/6,pi/2]])
+  plot (line "Shorter" [ drawChord1 (pi/2) (k*pi/9) | k <- [5..10] ])
+  plot (line "Longer" [ drawChord1 (pi/2) (k*pi/9) | k <- [11..13] ])
+
 -- Method 2: Choose a random radius and a point on the radius, then draw a perpendicular chord
 drawChord2 :: Radians -> Double -> [CircPoint]
 drawChord2 radius radDist = [(x' + dx, y' + dy),(x' - dx, y' - dy)]
@@ -27,6 +33,12 @@ drawChord2 radius radDist = [(x' + dx, y' + dy),(x' - dx, y' - dy)]
         (x', y') = (radDist * x, radDist * y)
         len      = sqrt $ 1 - radDist^2 -- Pythagorean formula
         (dx, dy) = (negate len * y, len * x)
+
+ex2 :: IO ()
+ex2 = toFile def "ex2.png" $ do
+  plot (line "" [circle, map radToPt [pi/2,7*pi/6,11*pi/6,pi/2], [(0,0),(0,-1)]])
+  plot (line "Shorter" [ drawChord2 (3*pi/2) k | k <- [0.55,0.65..0.95]])
+  plot (line "Longer" [ drawChord2 (3*pi/2) k | k <- [0.05,0.15..0.45]])
                            
 -- Method 3: Choose a random interior point and draw a chord through it
 drawChord3 :: CircPoint -> [CircPoint]
@@ -37,10 +49,13 @@ drawChord3 midpt = [(x + dx, y + dy), (x - dx, y - dy)]
         len      = sqrt $ 1 - radDist^2 -- Pythagorean formula
         (dx, dy) = (negate len * y', len * x')
 
--- Length of a side of an inscribed equilateral triangle
--- This is just for fun, the length of a side is sqrt 3!
-equilSide :: Double
-equilSide = dist (radToPt 0) (radToPt (2*pi/3))
+ex3 :: IO ()
+ex3 = toFile def "ex3.png" $ do
+  let smallCircle = map (\(x,y) -> (x/2,y/2)) circle
+  plot (line "" [circle, smallCircle])
+  plot (line "Shorter" [ drawChord3 mid | mid <- [(-0.5,0.5),(-0.65,0.35),(-0.35,0.65),
+                                                  (-0.75,0.1),(-0.1,0.75),(-0.4,0.4)] ])
+  plot (line "Longer" (map drawChord3 [(-0.25,0.1),(-0.1,0.25)] ))
 
 circle :: [CircPoint]
 circle = [ radToPt rad | rad <- [0.00,0.01..2*pi] ]
@@ -59,22 +74,18 @@ drawStuff points filename = toFile def filename $ do
 
 main :: IO ()
 main = do
-  -- We need >= 5 StdGens to ensure freshness of random numbers
   gen1 <- getStdGen
   gen2 <- newStdGen
-  gen2' <- newStdGen
-  gen3 <- newStdGen
-  gen3' <- newStdGen
   putStr "Enter desired method: "
   entry <- getLine
   let rands1  = let randRdns = splitAt 1000 $ take 2000 (randomRs (0, 2*pi) gen1 :: [Double])
                 in zip (fst randRdns) (snd randRdns)
       rands2  = let (randRdns, randDbs) = (take 1000 (randomRs (0, 2*pi) gen2),
-                                           take 1000 (randomRs (0.0, 1.0) gen2'))
+                                           take 1000 (randomRs (0.0, 1.0) gen1))
                                           :: ([Double], [Double])
                 in zip randRdns randDbs
-      rands3  = let (x, y) = (randomRs (-1.0, 1.0) gen3,
-                              randomRs (-1.0, 1.0) gen3')
+      rands3  = let (x, y) = (randomRs (-1.0, 1.0) gen1,
+                              randomRs (-1.0, 1.0) gen2)
                 in take 1000 $ filter (\(a, b) -> a^2 + b^2 <= 1 && (a, b) /= (0, 0)) $ zip x y
       chords1 = map (uncurry drawChord1) rands1
       chords2 = map (uncurry drawChord2) rands2
