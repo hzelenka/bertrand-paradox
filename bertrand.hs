@@ -62,10 +62,6 @@ circle = [ radToPt rad | rad <- [0.00,0.01..2*pi] ]
 
 drawStuff :: [[CircPoint]] -> FilePath -> IO ()
 drawStuff points filename = toFile def filename $ do
-  layout_left_axis_visibility.axis_show_ticks .= False
-  layout_left_axis_visibility.axis_show_labels .= False
-  layout_bottom_axis_visibility.axis_show_ticks .= False
-  layout_bottom_axis_visibility.axis_show_labels .= False
   let count   = length $ filter (\l -> dist (head l) (l !! 1) >= sqrt 3) points
       caption = show count ++ " out of 1000 points were longer than an equilateral side"
   setColors [opaque black, blue `withOpacity` 0.1]
@@ -90,11 +86,13 @@ main = do
       chords1 = map (uncurry drawChord1) rands1
       chords2 = map (uncurry drawChord2) rands2
       chords3 = map drawChord3 rands3
-      entry'  = case entry of "1" -> Right (chords1, "method1.png")
-                              "2" -> Right (chords2, "method2.png")
-                              "3" -> Right (chords3, "method3.png")
+      entry'  = case entry of "1" -> Right (drawStuff chords1 "method1.png")
+                              "2" -> Right (drawStuff chords2 "method2.png")
+                              "3" -> Right (drawStuff chords3 "method3.png")
+                              "1'" -> Right ex1
+                              "2'" -> Right ex2
+                              "3'" -> Right ex3
                               _ -> Left "Bad method, go talk to Joseph Bertrand about it"
-  case entry' of Right (m, filename) -> drawStuff m filename >>
-                                        putStrLn "Drew something, check your folders"
+  case entry' of Right procedure -> procedure >>
+                                    putStrLn "Drew something, check your folders"
                  Left err -> putStrLn err
-
