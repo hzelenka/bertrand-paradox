@@ -16,13 +16,19 @@ radToPt rad = (cos rad, sin rad)
 dist :: CircPoint -> CircPoint -> Double
 dist (x1, y1) (x2, y2) = sqrt $ (x2 - x1)^2 + (y2 - y1)^2
 
+circle :: [CircPoint]
+circle = [ radToPt rad | rad <- [0.00,0.01..2*pi] ]
+
+triangle :: [CircPoint]
+triangle = map radToPt [pi/2, 7*pi/6, 11*pi/6, pi/2]
+
 -- Method 1: Choose two random endpoints and draw a chord between them
 drawChord1 :: Radians -> Radians -> [CircPoint]
 drawChord1 endpt1 endpt2 = map radToPt [endpt1, endpt2]
 
 ex1 :: IO ()
 ex1 = toFile def "ex1.png" $ do
-  plot (line "" [circle, map radToPt [pi/2,7*pi/6,11*pi/6,pi/2]])
+  plot (line "" [circle, triangle])
   plot (line "Shorter" [ drawChord1 (pi/2) (k*pi/9) | k <- [5..10] ])
   plot (line "Longer" [ drawChord1 (pi/2) (k*pi/9) | k <- [11..13] ])
 
@@ -36,7 +42,7 @@ drawChord2 radius radDist = [(x' + dx, y' + dy),(x' - dx, y' - dy)]
 
 ex2 :: IO ()
 ex2 = toFile def "ex2.png" $ do
-  plot (line "" [circle, map radToPt [pi/2,7*pi/6,11*pi/6,pi/2], [(0,0),(0,-1)]])
+  plot (line "" [circle, triangle, [(0,0),(0,-1)]])
   plot (line "Shorter" [ drawChord2 (3*pi/2) k | k <- [0.55,0.65..0.95]])
   plot (line "Longer" [ drawChord2 (3*pi/2) k | k <- [0.05,0.15..0.45]])
                            
@@ -52,18 +58,15 @@ drawChord3 midpt = [(x + dx, y + dy), (x - dx, y - dy)]
 ex3 :: IO ()
 ex3 = toFile def "ex3.png" $ do
   let smallCircle = map (\(x,y) -> (x/2,y/2)) circle
-  plot (line "" [circle, smallCircle])
+  plot (line "" [circle, smallCircle, triangle])
   plot (line "Shorter" [ drawChord3 mid | mid <- [(-0.5,0.5),(-0.65,0.35),(-0.35,0.65),
                                                   (-0.75,0.1),(-0.1,0.75),(-0.4,0.4)] ])
   plot (line "Longer" (map drawChord3 [(-0.25,0.1),(-0.1,0.25)] ))
 
-circle :: [CircPoint]
-circle = [ radToPt rad | rad <- [0.00,0.01..2*pi] ]
-
 drawStuff :: [[CircPoint]] -> FilePath -> IO ()
 drawStuff points filename = toFile def filename $ do
   let count   = length $ filter (\l -> dist (head l) (l !! 1) >= sqrt 3) points
-      caption = show count ++ " out of 1000 points were longer than an equilateral side"
+      caption = show count ++ " out of 1000 lines were longer than an equilateral side"
   setColors [opaque black, blue `withOpacity` 0.1]
   plot (line "" [circle])
   plot (line caption points)
@@ -80,8 +83,7 @@ main = do
                                            take 1000 (randomRs (0.0, 1.0) gen1))
                                           :: ([Double], [Double])
                 in zip randRdns randDbs
-      rands3  = let (x, y) = (randomRs (-1.0, 1.0) gen1,
-                              randomRs (-1.0, 1.0) gen2)
+      rands3  = let (x, y) = (randomRs (-1.0, 1.0) gen1, randomRs (-1.0, 1.0) gen2)
                 in take 1000 $ filter (\(a, b) -> a^2 + b^2 <= 1 && (a, b) /= (0, 0)) $ zip x y
       chords1 = map (uncurry drawChord1) rands1
       chords2 = map (uncurry drawChord2) rands2
